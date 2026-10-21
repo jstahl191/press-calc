@@ -87,16 +87,15 @@ function calc(){
  const laborPc=partsPerHr>0?labor/partsPerHr:0;
  const pricePc=matPc+pressPc+laborPc;
  const profMo=hrsMo*rate, profYr=profMo*12;
- const revYr=vol*pricePc;
  const availMo=$("hpd")*$("dpw")*52/12*eff;
  const util=availMo>0?hrsMo/availMo:0;
- const set=(id,t)=>{const e=document.getElementById(id);e.textContent=t;e.className="v"};
- set("b_py",usd(profYr));set("b_pm",usd(profMo));set("b_hm",num(hrsMo,1));set("b_mg",usd(pricePc,4));
+ const set=(id,t,c)=>{const e=document.getElementById(id);e.textContent=t;e.className="v "+(c||"")};
+ set("b_py",usd(profYr),"pos");set("b_pm",usd(profMo),"pos");set("b_hm",num(hrsMo,1));set("b_mg",usd(pricePc,4));
  document.getElementById("util").textContent=num(hrsMo,1)+" of "+num(availMo,1)+" available hrs/month at "+num(eff*100,0)+"% OEE ("+num(util*100,1)+"%)";
  document.getElementById("ubar").style.width=Math.min(util*100,100)+"%";
- rows("o_hours",[["Parts / hr",num(partsPerHr,1)],["Shots / hr",num(shotsPerHr,1)],["Run hrs / yr",num(hrsYr,1)],["Run hrs / month",num(hrsMo,1)],["Run hrs / week",num(hrsYr/52,1)],["Volume / month",num(volMo)]]);
+ rows("o_hours",[["Parts / hr",num(partsPerHr,1)],["Shots / hr",num(shotsPerHr,1)],["Run hrs / yr",num(hrsYr,1)],["Run hrs / month",num(hrsMo,1)],["Volume / month",num(volMo)]]);
  rows("o_cost",[["Material (w/ scrap)",usd(matPc,4)],["Press",usd(pressPc,4)],["Labor",usd(laborPc,4)],["Piece price",usd(pricePc,4)],["Price / 1,000",usd(pricePc*1000,2)]]);
- rows("o_money",[["Profit / month (rate × hrs)",usd(profMo)],["Profit / yr",usd(profYr)],["Revenue / month",usd(revYr/12)],["Revenue / yr",usd(revYr)],["Material lbs / month",num(volMo*$("wt"))],["Material lbs / yr",num(vol*$("wt"))]]);
+ rows("o_money",[["Profit / month (rate × hrs)",usd(profMo)],["Profit / yr",usd(profYr)],["Material lbs / month",num(volMo*$("wt"))],["Material lbs / yr",num(vol*$("wt"))]]);
  const s={};ids.forEach(i=>s[i]=document.getElementById(i).value);localStorage.setItem("mwmcalc3",JSON.stringify(s));
 }
 function resetAll(){ids.forEach(i=>document.getElementById(i).value=defs[i]||"");calc()}
