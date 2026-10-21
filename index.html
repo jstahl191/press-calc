@@ -45,8 +45,8 @@ small{color:var(--mut)}
  <div><label>Annual volume (pcs)</label><input id="vol" type="number" inputmode="decimal" value=""></div>
  <div><label>Cavities</label><input id="cav" type="number" inputmode="decimal" value=""></div>
  <div><label>Cycle time (sec)</label><input id="cycle" type="number" inputmode="decimal" step="0.1" value=""></div>
- <div><label>Efficiency / OEE (%)</label><input id="eff" type="number" inputmode="decimal" value="100"></div>
- <div><label>Scrap (%)</label><input id="scrap" type="number" inputmode="decimal" value=""></div>
+ <div><label>Efficiency / OEE (%)</label><input id="eff" type="number" inputmode="decimal" value="85"></div>
+ <div><label>Scrap (%)</label><input id="scrap" type="number" inputmode="decimal" value="5"></div>
 </div></div>
 
 <div class="card"><h2>Press & Costs</h2><div class="grid">
@@ -70,7 +70,7 @@ small{color:var(--mut)}
 </main>
 <script>
 const ids=["vol","cav","cycle","eff","scrap","rate","labor","wt","mat","hpd","dpw"];
-const defs={eff:"100",hpd:"24",dpw:"7"};
+const defs={eff:"85",scrap:"5",hpd:"24",dpw:"7"};
 const $=i=>parseFloat(document.getElementById(i).value)||0;
 const usd=(n,d=2)=>(n<0?"-":"")+"$"+Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
 const num=(n,d=0)=>n.toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -96,9 +96,9 @@ function calc(){
  rows("o_hours",[["Parts / hr",num(partsPerHr,1)],["Shots / hr",num(shotsPerHr,1)],["Run hrs / yr",num(hrsYr,1)],["Run hrs / month",num(hrsMo,1)],["Volume / month",num(volMo)]]);
  rows("o_cost",[["Material (w/ scrap)",usd(matPc,4)],["Press",usd(pressPc,4)],["Labor",usd(laborPc,4)],["Piece price",usd(pricePc,4)],["Price / 1,000",usd(pricePc*1000,2)]]);
  rows("o_money",[["Profit / month (rate × hrs)",usd(profMo)],["Profit / yr",usd(profYr)],["Material lbs / month",num(volMo*$("wt"))],["Material lbs / yr",num(vol*$("wt"))]]);
- const s={};ids.forEach(i=>s[i]=document.getElementById(i).value);localStorage.setItem("mwmcalc3",JSON.stringify(s));
+ const s={};ids.forEach(i=>s[i]=document.getElementById(i).value);localStorage.setItem("mwmcalc4",JSON.stringify(s));
 }
 function resetAll(){ids.forEach(i=>document.getElementById(i).value=defs[i]||"");calc()}
-try{const s=JSON.parse(localStorage.getItem("mwmcalc3")||"{}");ids.forEach(i=>{if(s[i]!==undefined)document.getElementById(i).value=s[i]})}catch(e){}
+try{const s=JSON.parse(localStorage.getItem("mwmcalc4")||"{}");ids.forEach(i=>{if(s[i]!==undefined)document.getElementById(i).value=s[i]})}catch(e){}
 ids.forEach(i=>document.getElementById(i).addEventListener("input",calc));calc();
 </script></body></html>
