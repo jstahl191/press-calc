@@ -30,6 +30,7 @@ input,select{width:100%;font-size:17px;padding:9px;border:1px solid #ddd;border-
 .big .card{margin:0;text-align:center}.big .v{font-size:22px;font-weight:700}.big .l{font-size:12px;color:var(--mut)}
 .pos{color:#0a7a2f}.neg{color:var(--red)}
 .bar{height:10px;background:#eee;border-radius:5px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--red)}
+#actout .big{margin-top:12px}#actout .big .card{background:var(--bg)}
 small{color:var(--mut)}
 </style></head><body>
 <header><b>Midwest Molding <span>Press Calc</span></b><button onclick="resetAll()">Reset</button></header>
@@ -63,13 +64,27 @@ small{color:var(--mut)}
 <div style="margin-top:10px"><small>Press capacity used: <b id="util">–</b></small><div class="bar"><i id="ubar" style="width:0"></i></div></div>
 </div>
 
+<div class="card"><h2>Actual Cycle Time</h2>
+ <div><label>Actual cycle (sec)</label><input id="actcyc" type="number" inputmode="decimal" step="0.1" value=""></div>
+ <p id="acthint" style="text-align:center;margin:10px 0 0"><small>Enter actual cycle to see profit impact</small></p>
+ <div id="actout" style="display:none">
+  <div class="big">
+   <div class="card"><div class="l">Profit Impact / Month</div><div class="v" id="a_im">–</div></div>
+   <div class="card"><div class="l">Profit Impact / Year</div><div class="v" id="a_iy">–</div></div>
+  </div>
+  <p id="actsum" style="text-align:center;margin:0 0 12px;font-size:15px"></p>
+  <div class="out" id="o_act"></div>
+  <div style="margin-top:10px"><small>Actual capacity used: <b id="autil">–</b></small><div class="bar"><i id="aubar" style="width:0"></i></div></div>
+ </div>
+</div>
+
 <div class="card"><h2>Run Hours</h2><div class="out" id="o_hours"></div></div>
 <div class="card"><h2>Cost per Part</h2><div class="out" id="o_cost"></div></div>
 <div class="card"><h2>Money</h2><div class="out" id="o_money"></div></div>
 <p style="text-align:center"><small>Saved automatically on this device.</small></p>
 </main>
 <script>
-const ids=["vol","cav","cycle","eff","scrap","rate","labor","wt","mat","hpd","dpw"];
+const ids=["vol","cav","cycle","eff","scrap","rate","labor","wt","mat","hpd","dpw","actcyc"];
 const defs={eff:"85",scrap:"5",hpd:"24",dpw:"7"};
 const $=i=>parseFloat(document.getElementById(i).value)||0;
 const usd=(n,d=2)=>(n<0?"-":"")+"$"+Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -96,9 +111,43 @@ function calc(){
  rows("o_hours",[["Parts / hr",num(partsPerHr,1)],["Shots / hr",num(shotsPerHr,1)],["Run hrs / yr",num(hrsYr,1)],["Run hrs / month",num(hrsMo,1)],["Volume / month",num(volMo)]]);
  rows("o_cost",[["Material (w/ scrap)",usd(matPc,4)],["Press",usd(pressPc,4)],["Labor",usd(laborPc,4)],["Piece price",usd(pricePc,4)],["Price / 1,000",usd(pricePc*1000,2)]]);
  rows("o_money",[["Profit / month (rate × hrs)",usd(profMo)],["Profit / yr",usd(profYr)],["Material lbs / month",num(volMo*$("wt"))],["Material lbs / yr",num(vol*$("wt"))]]);
- const s={};ids.forEach(i=>s[i]=document.getElementById(i).value);localStorage.setItem("mwmcalc4",JSON.stringify(s));
+ const actCyc=$("actcyc");
+ const actOn=actCyc>0;
+ document.getElementById("acthint").style.display=actOn?"none":"";
+ document.getElementById("actout").style.display=actOn?"block":"none";
+ if(actOn){
+  const actParts=3600/actCyc*cav;
+  const actHrs=actParts>0?volMo/actParts:0;
+  const hrsDiff=actHrs-hrsMo;
+  const effRate=rate*cyc/actCyc;
+  const impactMo=(hrsMo-actHrs)*rate;
+  const impactYr=impactMo*12;
+  const actProf=hrsMo*rate-(actHrs-hrsMo)*rate;
+  const actUtil=availMo>0?actHrs/availMo:0;
+  const cls=impactMo>=0?"pos":"neg";
+  const signUsd=n=>n<0?usd(n):"+"+usd(n);
+  const signHrs=n=>(n>0?"+":n<0?"-":"")+num(Math.abs(n),2);
+  set("a_im",signUsd(impactMo),cls);set("a_iy",signUsd(impactYr),cls);
+  const dSec=actCyc-cyc, absSec=num(Math.abs(dSec),1);
+  document.getElementById("actsum").textContent=dSec>0
+   ? "Running "+absSec+" sec slower than quoted costs "+usd(Math.abs(impactMo))+"/month ("+usd(Math.abs(impactYr))+"/year)."
+   : dSec<0
+   ? "Running "+absSec+" sec faster than quoted adds "+usd(Math.abs(impactMo))+"/month ("+usd(Math.abs(impactYr))+"/year)."
+   : "Running at the quoted cycle. No profit impact.";
+  rows("o_act",[
+   ["Actual parts / hr",num(actParts,1)],
+   ["Quoted run hrs / month",num(hrsMo,2)],
+   ["Actual run hrs / month",num(actHrs,2)],
+   ["Hrs / month difference",signHrs(hrsDiff)+" hrs/month"],
+   ["Effective press rate",usd(effRate)+"/hr"],
+   ["Actual profit / month",usd(actProf)]
+  ]);
+  document.getElementById("autil").textContent=num(actHrs,1)+" of "+num(availMo,1)+" available hrs/month at "+num(eff*100,0)+"% OEE ("+num(actUtil*100,1)+"%)";
+  document.getElementById("aubar").style.width=Math.min(actUtil*100,100)+"%";
+ }
+ const s={};ids.forEach(i=>s[i]=document.getElementById(i).value);localStorage.setItem("mwmcalc5",JSON.stringify(s));
 }
 function resetAll(){ids.forEach(i=>document.getElementById(i).value=defs[i]||"");calc()}
-try{const s=JSON.parse(localStorage.getItem("mwmcalc4")||"{}");ids.forEach(i=>{if(s[i]!==undefined)document.getElementById(i).value=s[i]})}catch(e){}
+try{const raw=localStorage.getItem("mwmcalc5")??localStorage.getItem("mwmcalc4");const s=JSON.parse(raw||"{}");ids.forEach(i=>{if(s[i]!==undefined)document.getElementById(i).value=s[i]})}catch(e){}
 ids.forEach(i=>document.getElementById(i).addEventListener("input",calc));calc();
 </script></body></html>
